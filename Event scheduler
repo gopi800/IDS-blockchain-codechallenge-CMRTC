@@ -1,0 +1,78 @@
+from datetime import datetime, timedelta
+
+class Event:
+    def __init__(self, start_time, end_time, description):
+        self.start_time = start_time
+        self.end_time = end_time
+        self.description = description
+
+    def __repr__(self):
+        return f"{self.description} ({self.start_time} - {self.end_time})"
+
+class EventManager:
+    def __init__(self):
+        self.events = []
+
+    def add_event(self, new_event):
+        conflict_found = False
+        for event in self.events:
+            if not (new_event.end_time <= event.start_time or new_event.start_time >= event.end_time):
+                print(f"Conflict detected for event: {new_event.description}")
+                conflict_found = True
+                break
+
+        if not conflict_found:
+            self.events.append(new_event)
+            print(f"Event added: {new_event.description}")
+
+        return conflict_found, new_event
+
+    def suggest_alternative_time(self, new_event):
+        last_end_time = max((event.end_time for event in self.events), default=datetime.now())
+        suggested_start = last_end_time + timedelta(minutes=15)
+        suggested_end = suggested_start + (new_event.end_time - new_event.start_time)
+        return f"{suggested_start} - {suggested_end}"
+
+    def display_events(self):
+        if not self.events:
+            print("No events scheduled.")
+        else:
+            for event in self.events:
+                print(event)
+
+def get_event_input():
+    description = input("Enter event description: ")
+    start_hour, start_minute = map(int, input("Enter start time (hour minute): ").split())
+    end_hour, end_minute = map(int, input("Enter end time (hour minute): ").split())
+    
+    date_str = input("Enter the event date (YYYY-MM-DD): ")
+    event_date = datetime.strptime(date_str, "%Y-%m-%d")
+    
+    start_time = event_date.replace(hour=start_hour, minute=start_minute, second=0, microsecond=0)
+    end_time = event_date.replace(hour=end_hour, minute=end_minute, second=0, microsecond=0)
+    
+    return description, start_time, end_time
+
+def main():
+    manager = EventManager()
+    conflict_events = []
+
+    n = int(input("How many events do you want to add? "))
+
+    for _ in range(n):
+        description, start_time, end_time = get_event_input()
+        event = Event(start_time, end_time, description)
+        
+        conflict_found, event = manager.add_event(event)
+        
+        if conflict_found:
+            conflict_events.append(event)
+    
+    manager.display_events()
+
+   
+    for event in conflict_events:
+        suggested_time = manager.suggest_alternative_time(event)
+        print(f"Suggested alternative time for {event.description}: {suggested_time}")
+
+main()
